@@ -37,6 +37,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./data:/data
     healthcheck:
       test: ["CMD", "pg_isready", "-d", "${AIRFLOW_DB}", "database", "-U", "${POSTGRES_USER}"]
       interval: 5s
