@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import csv
 import os
-from pathlib import Path
 import shutil
-import kagglehub
+from pathlib import Path
 
 # Download selected CSVs from Kaggle, store full files in data/full,
 # then write small samples to data/sample.
@@ -26,9 +27,9 @@ def write_samples(full_dir: Path, sample_dir: Path, files: list[str], sample_row
 
 
 def download_datasets() -> None:
-    dataset_path = Path(kagglehub.dataset_download("olistbr/brazilian-ecommerce"))
-    output_dir = Path("data/full")
-    sample_dir = Path("data/sample")
+    base_data_dir = Path(__file__).resolve().parents[1] / "data"
+    output_dir = base_data_dir / "full"
+    sample_dir = base_data_dir / "sample"
     output_dir.mkdir(parents=True, exist_ok=True)
     files_to_download = [
         "olist_customers_dataset.csv",
@@ -37,6 +38,16 @@ def download_datasets() -> None:
         "olist_products_dataset.csv",
     ]
     sample_rows = int(os.getenv("SAMPLE_ROWS", "1000"))
+    full_files_exist = all((output_dir / f).exists() for f in files_to_download)
+
+    if full_files_exist:
+        print("All full CSV files already exist in data/full. Skipping download.")
+        write_samples(output_dir, sample_dir, files_to_download, sample_rows)
+        return
+
+    import kagglehub
+
+    dataset_path = Path(kagglehub.dataset_download("olistbr/brazilian-ecommerce"))
 
     for file_name in files_to_download:
         src = dataset_path / file_name
