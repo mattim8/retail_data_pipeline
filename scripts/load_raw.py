@@ -40,6 +40,7 @@ def connect_postgres():
         print("Data loaded into raw tables successfully")
     except Exception as e:
         print(f"An error occurred: {e}")
+        raise
     finally:
         if cur:
             cur.close()
