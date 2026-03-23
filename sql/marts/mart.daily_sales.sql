@@ -1,3 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS mart;
+
 CREATE TABLE IF NOT EXISTS mart.daily_sales (
     order_date DATE PRIMARY KEY,
     total_orders INT,
