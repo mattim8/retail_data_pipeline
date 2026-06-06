@@ -1,8 +1,35 @@
 ﻿# Retail Analytics Data Pipeline (Airflow + Postgres)
 
+## Table of Contents
+
+- [Description](#description)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Architecture](#architecture)
+- [Screenshots](#screenshots)
+- [Local Run](#local-run)
+- [Full Dataset Run](#full-dataset-run)
+- [Notes](#notes)
+
 ## Description
 
 A reproducible retail analytics pipeline built with Apache Airflow and PostgreSQL. It ingests e-commerce CSV data, builds layered SQL models (`raw -> stg -> core -> mart`), and validates quality with SQL tests.
+
+```mermaid
+flowchart LR
+    kaggle[Kaggle Olist Dataset] --> data[CSV files]
+    data --> raw[raw schema]
+    raw --> stg[stg views]
+    stg --> core[core tables]
+    core --> mart[mart.daily_sales]
+    mart --> tests[SQL quality checks]
+    airflow[Airflow DAG<br/>retail_pipeline_daily] -. orchestrates .-> data
+    airflow -. orchestrates .-> raw
+    airflow -. orchestrates .-> stg
+    airflow -. orchestrates .-> core
+    airflow -. orchestrates .-> mart
+    airflow -. orchestrates .-> tests
+```
 
 ## Tech Stack
 
@@ -41,6 +68,8 @@ The pipeline is implemented as a daily batch process in Airflow with layered dat
 - The `scripts/download_dataset.py` script:
   - downloads full CSV files into `data/full/` (if they are missing),
   - creates a sample subset in `data/sample/` for fast local testing.
+- By default, the pipeline loads committed sample CSV files from `/data/sample`.
+- Full dataset execution is optional and uses `/data/full` plus Kaggle API credentials.
 
 ##### <span style="text-decoration: underline;">Databases and Schemas</span>
 
@@ -88,20 +117,63 @@ The `mart.daily_sales` mart aggregates daily sales and includes key KPIs:
 
 Only orders with statuses `delivered` and `shipped` are included.
 
+## Screenshots
+
+Airflow DAG successful run:
+
+![Airflow DAG success](img/airflow_dag_success.png)
+
+Daily sales mart output:
+
+![Daily sales mart](img/mart_daily_sales.png)
+
+SQL data quality checks:
+
+![SQL tests success](img/sql_tests_success.png)
+
 ## Local Run
 
-1. Start services:
+1. Create local env file:
+
+```bash
+cp env.example .env
+```
+
+2. Start services:
 
 ```bash
 docker compose up -d
 ```
 
-2. Open Airflow UI and run the `retail_pipeline_daily` DAG.
+3. Open Airflow UI and run the `retail_pipeline_daily` DAG.
 
-3. Validate output in `mart.daily_sales`.
+4. Validate output in `mart.daily_sales`.
+
+## Full Dataset Run
+
+The default mode uses `data/sample/` and does not require Kaggle access.
+
+To run the pipeline on the full Olist dataset:
+
+1. Add Kaggle API credentials to local `.env`:
+
+```env
+KAGGLE_API_TOKEN=<your_kaggle_api_token>
+DATA_PATH=/data/full
+```
+
+2. Restart Airflow services:
+
+```bash
+docker compose up -d
+```
+
+3. Run the `retail_pipeline_daily` DAG.
+
+The `generate_data` task downloads CSV files into `data/full/`, and `load_raw` loads the full dataset into PostgreSQL.
 
 ## Notes
 
 - `data/full/` and `logs/` are not committed to git.
-- `data/sample/` can be kept in the repository for reproducible demo runs without Kaggle access.
+- `data/sample/` is kept in the repository for reproducible demo runs without Kaggle access.
 - Downloading full data requires Kaggle API access in the container environment.
