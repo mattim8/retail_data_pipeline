@@ -1,4 +1,5 @@
 import os
+from pathlib import PurePosixPath
 
 import psycopg2
 
@@ -16,20 +17,30 @@ def connect_postgres():
         )
         print("Connected to PostgreSQL database successfully")
         cur = conn.cursor()
-        sql1 = """COPY raw.customers
-                 FROM '/data/full/olist_customers_dataset.csv'
+        data_path = PurePosixPath(os.getenv("DATA_PATH", "/data/sample"))
+        cur.execute(
+            """
+            TRUNCATE TABLE
+                raw.customers,
+                raw.orders,
+                raw.products,
+                raw.order_items;
+            """
+        )
+        sql1 = f"""COPY raw.customers
+                 FROM '{data_path / "olist_customers_dataset.csv"}'
                  DELIMITER ','
                  CSV HEADER;"""
-        sql2 = """COPY raw.orders
-                 FROM '/data/full/olist_orders_dataset.csv'
+        sql2 = f"""COPY raw.orders
+                 FROM '{data_path / "olist_orders_dataset.csv"}'
                  DELIMITER ','
                  CSV HEADER;"""
-        sql3 = """COPY raw.products
-                 FROM '/data/full/olist_products_dataset.csv'
+        sql3 = f"""COPY raw.products
+                 FROM '{data_path / "olist_products_dataset.csv"}'
                  DELIMITER ','
                  CSV HEADER;"""
-        sql4 = """COPY raw.order_items
-                 FROM '/data/full/olist_order_items_dataset.csv'
+        sql4 = f"""COPY raw.order_items
+                 FROM '{data_path / "olist_order_items_dataset.csv"}'
                  DELIMITER ','
                  CSV HEADER;"""
         cur.execute(sql1)

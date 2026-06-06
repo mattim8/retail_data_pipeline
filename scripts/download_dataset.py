@@ -39,10 +39,15 @@ def download_datasets() -> None:
     ]
     sample_rows = int(os.getenv("SAMPLE_ROWS", "1000"))
     full_files_exist = all((output_dir / f).exists() for f in files_to_download)
+    sample_files_exist = all((sample_dir / f).exists() for f in files_to_download)
 
     if full_files_exist:
         print("All full CSV files already exist in data/full. Skipping download.")
         write_samples(output_dir, sample_dir, files_to_download, sample_rows)
+        return
+
+    if sample_files_exist and not os.getenv("KAGGLE_API_TOKEN"):
+        print("Sample CSV files already exist and Kaggle token is not configured. Skipping full download.")
         return
 
     import kagglehub
